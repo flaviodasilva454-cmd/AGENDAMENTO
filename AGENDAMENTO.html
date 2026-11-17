@@ -1,0 +1,310 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BarberAgenda Mobile</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#121214',
+                        cardbg: '#1a1a1e',
+                        cardhover: '#25252b',
+                        gold: '#d4af37',
+                        goldhover: '#c29b2e',
+                        accent: '#eab308'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontInter & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #121214; }
+        ::-webkit-scrollbar-thumb { background: #2a2a30; border-radius: 4px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-100 h-full flex flex-col justify-between selection:bg-gold selection:text-black">
+
+    <!-- Toast Notification container -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 w-11/12 max-w-md pointer-events-none"></div>
+
+    <!-- Top Header -->
+    <header class="bg-cardbg border-b border-gray-800 px-4 py-3 sticky top-0 z-30 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-2">
+            <div class="w-9 h-9 rounded-full bg-gold/20 flex items-center justify-center text-gold border border-gold/40">
+                <i class="fa-solid fa-scissors"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm tracking-wide text-white uppercase" id="barber-shop-name">Barbearia Elite</h1>
+                <p class="text-xs text-gray-400" id="current-date-header">Carregando data...</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="openSettingsModal()" class="w-9 h-9 rounded-full bg-cardhover flex items-center justify-center text-gray-300 hover:text-gold transition" title="Configurações">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto pb-24 px-4 pt-4 max-w-md mx-auto w-full">
+
+        <!-- TAB 1: AGENDA -->
+        <section id="tab-agenda" class="tab-content active space-y-4">
+            <div class="flex items-center justify-between bg-cardbg p-3 rounded-xl border border-gray-800">
+                <div>
+                    <span class="text-xs text-gray-400 block">Data Selecionada</span>
+                    <input type="date" id="filter-date" class="bg-transparent text-white font-semibold text-sm focus:outline-none cursor-pointer mt-0.5" onchange="renderAgenda()">
+                </div>
+                <button onclick="openAppointmentModal()" class="bg-gold hover:bg-goldhover text-black px-4 py-2 rounded-lg font-semibold text-xs flex items-center gap-2 shadow-lg shadow-gold/20 transition">
+                    <i class="fa-solid fa-plus"></i> Novo Agendamento
+                </button>
+            </div>
+
+            <!-- Resumo do Dia -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-cardbg p-3 rounded-xl border border-gray-800">
+                    <span class="text-xs text-gray-400">Agendados Hoje</span>
+                    <h3 class="text-xl font-bold text-white mt-1" id="stat-day-count">0</h3>
+                </div>
+                <div class="bg-cardbg p-3 rounded-xl border border-gray-800">
+                    <span class="text-xs text-gray-400">Previsto Hoje</span>
+                    <h3 class="text-xl font-bold text-gold mt-1" id="stat-day-revenue">R$ 0,00</h3>
+                </div>
+            </div>
+
+            <!-- Lista de Agendamentos -->
+            <div class="space-y-3" id="appointments-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 2: CLIENTES -->
+        <section id="tab-clientes" class="tab-content space-y-4">
+            <div class="flex items-center justify-between gap-2">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs"></i>
+                    <input type="text" id="search-client" placeholder="Buscar cliente por nome..." oninput="renderClients()" class="w-full bg-cardbg border border-gray-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <button onclick="openClientModal()" class="bg-gold hover:bg-goldhover text-black px-4 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-1.5 shrink-0 shadow-lg shadow-gold/20 transition">
+                    <i class="fa-solid fa-user-plus"></i> Novo
+                </button>
+            </div>
+
+            <div class="space-y-3" id="clients-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 3: SERVIÇOS -->
+        <section id="tab-servicos" class="tab-content space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-gray-300">Serviços Oferecidos</h2>
+                <button onclick="openServiceModal()" class="bg-gold hover:bg-goldhover text-black px-4 py-2 rounded-lg font-semibold text-xs flex items-center gap-2 shadow-lg shadow-gold/20 transition">
+                    <i class="fa-solid fa-plus"></i> Novo Serviço
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3" id="services-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 4: FINANCEIRO -->
+        <section id="tab-financeiro" class="tab-content space-y-4">
+            <!-- Cards de Resumo -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-cardbg p-3.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center justify-between text-gray-400 text-xs mb-1">
+                        <span>Faturamento Hoje</span>
+                        <i class="fa-solid fa-calendar-day text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white" id="fin-today">R$ 0,00</h3>
+                </div>
+                <div class="bg-cardbg p-3.5 rounded-xl border border-gray-800">
+                    <div class="flex items-center justify-between text-gray-400 text-xs mb-1">
+                        <span>Faturamento Mês</span>
+                        <i class="fa-solid fa-chart-line text-gold"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white" id="fin-month">R$ 0,00</h3>
+                </div>
+            </div>
+
+            <div class="bg-cardbg p-4 rounded-xl border border-gray-800 flex items-center justify-between">
+                <div>
+                    <span class="text-xs text-gray-400">Serviços Concluídos no Mês</span>
+                    <h4 class="text-xl font-bold text-white mt-0.5" id="fin-count-month">0</h4>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold border border-gold/30">
+                    <i class="fa-solid fa-wallet text-lg"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2">
+                <h2 class="text-sm font-semibold text-gray-300">Histórico de Caixa</h2>
+                <button onclick="openExpenseModal()" class="bg-cardhover hover:bg-gray-800 text-gray-200 border border-gray-700 px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-minus text-red-400"></i> Registrar Saída
+                </button>
+            </div>
+
+            <div class="space-y-2.5" id="finance-list">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bg-cardbg border-t border-gray-800 fixed bottom-0 left-0 right-0 z-30 max-w-md mx-auto flex justify-around items-center h-16 px-2 shadow-2xl">
+        <button onclick="switchTab('agenda')" id="nav-agenda" class="flex flex-col items-center justify-center flex-1 py-1 text-gold transition">
+            <i class="fa-solid fa-calendar-days text-lg mb-1"></i>
+            <span class="text-[10px] font-medium">Agenda</span>
+        </button>
+        <button onclick="switchTab('clientes')" id="nav-clientes" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-gray-200 transition">
+            <i class="fa-solid fa-users text-lg mb-1"></i>
+            <span class="text-[10px] font-medium">Clientes</span>
+        </button>
+        <button onclick="switchTab('servicos')" id="nav-servicos" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-gray-200 transition">
+            <i class="fa-solid fa-scissors text-lg mb-1"></i>
+            <span class="text-[10px] font-medium">Serviços</span>
+        </button>
+        <button onclick="switchTab('financeiro')" id="nav-financeiro" class="flex flex-col items-center justify-center flex-1 py-1 text-gray-400 hover:text-gray-200 transition">
+            <i class="fa-solid fa-chart-pie text-lg mb-1"></i>
+            <span class="text-[10px] font-medium">Caixa</span>
+        </button>
+    </nav>
+
+    <!-- MODALS -->
+
+    <!-- Modal: Novo/Editar Agendamento -->
+    <div id="modal-appointment" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-cardbg border-t sm:border border-gray-800 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                <h3 class="font-bold text-base text-white" id="modal-app-title">Novo Agendamento</h3>
+                <button onclick="closeModal('modal-appointment')" class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-appointment" onsubmit="saveAppointment(event)" class="space-y-3.5">
+                <input type="hidden" id="app-id">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Cliente *</label>
+                    <div class="flex gap-2">
+                        <select id="app-client" required class="flex-1 bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                            <option value="">Selecione o cliente...</option>
+                        </select>
+                        <button type="button" onclick="openClientModal(true)" class="bg-cardhover border border-gray-700 px-3 rounded-xl text-xs text-gold hover:bg-gray-800"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Serviço *</label>
+                    <select id="app-service" required onchange="updateServicePrice()" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                        <option value="">Selecione o serviço...</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Data *</label>
+                        <input type="date" id="app-date" required class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Horário *</label>
+                        <input type="time" id="app-time" required class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Valor (R$) *</label>
+                    <input type="number" step="0.01" id="app-price" required class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Status</label>
+                    <select id="app-status" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                        <option value="Agendado">Agendado</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('modal-appointment')" class="flex-1 bg-cardhover border border-gray-700 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hover:bg-gray-800 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-gold hover:bg-goldhover py-2.5 rounded-xl text-xs font-semibold text-black transition shadow-lg shadow-gold/20">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Novo/Editar Cliente -->
+    <div id="modal-client" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-cardbg border-t sm:border border-gray-800 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                <h3 class="font-bold text-base text-white" id="modal-client-title">Novo Cliente</h3>
+                <button onclick="closeModal('modal-client')" class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-client" onsubmit="saveClient(event)" class="space-y-3.5">
+                <input type="hidden" id="client-id">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Nome Completo *</label>
+                    <input type="text" id="client-name" required placeholder="Ex: Carlos Silva" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Telefone / WhatsApp *</label>
+                    <input type="text" id="client-phone" required placeholder="(00) 90000-0000" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Observações / Preferências</label>
+                    <textarea id="client-obs" rows="3" placeholder="Ex: Gosta do corte degradê alto, usa pomada efeito seco..." class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold"></textarea>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('modal-client')" class="flex-1 bg-cardhover border border-gray-700 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hover:bg-gray-800 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-gold hover:bg-goldhover py-2.5 rounded-xl text-xs font-semibold text-black transition shadow-lg shadow-gold/20">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Novo/Editar Serviço -->
+    <div id="modal-service" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-cardbg border-t sm:border border-gray-800 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                <h3 class="font-bold text-base text-white" id="modal-service-title">Novo Serviço</h3>
+                <button onclick="closeModal('modal-service')" class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-service" onsubmit="saveService(event)" class="space-y-3.5">
+                <input type="hidden" id="service-id">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Nome do Serviço *</label>
+                    <input type="text" id="service-name" required placeholder="Ex: Corte Degradê" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Preço (R$) *</label>
+                        <input type="number" step="0.01" id="service-price" required placeholder="40.00" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Duração (min) *</label>
+                        <input type="number" id="service-duration" required value="30" class="w-full bg-darkbg border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('modal-service')" class="flex-1 bg-cardhover border border-gray-700 py-2.5 rounded-xl text-xs font-semibold text-gray-300 hover:bg-gray-800 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 bg-gold hover:bg-goldhover py-2.5 rounded-xl text-xs font-semibold text-black transition shadow-lg shadow-gold/20">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Saída Financeira -->
+    <div id="modal-expense" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-cardbg border-t sm:border border-gray-800 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-800">
+                <h3 class="font-bold text-base text-white">Registrar Saída / Despesa</h3>
+                <button onclick="closeModal('modal-expense')" class="text-gray-400 hover:text-white p
